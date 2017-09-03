@@ -1,0 +1,55 @@
+#version 330 core
+
+uniform mat4 projection;
+uniform mat4 view;
+uniform mat4 model;
+uniform mat4 modelView;
+uniform mat4 Depth;
+uniform mat4 DepthBias;
+uniform vec3 LightPosition_worldspace;
+uniform int is_First_v;
+
+in vec3 vertex;
+in vec2 uv;
+in vec3 normal;
+
+out vec2 UV;
+out vec3 Position_worldspace;
+out vec3 Normal_cameraspace;
+out vec3 EyeDirection_cameraspace;
+out vec3 LightDirection_cameraspace;
+out vec4 ShadowCoord;
+
+void main()
+{
+	if(is_First_v  == 1)
+	{
+		gl_Position=projection*model*vec4(vertex,1.0);
+	}
+	else
+	{
+
+		gl_Position = projection * view * model * vec4(vertex, 1.0);
+
+		Position_worldspace = (model * vec4(vertex,1)).xyz;
+
+		vec3 vertexPosition_cameraspace = ( view * model * vec4(vertex,1.0)).xyz;
+		EyeDirection_cameraspace = vec3(0,0,0) - vertexPosition_cameraspace;
+
+		ShadowCoord = (DepthBias*projection*model) * vec4(vertex, 1.0);
+
+		vec3 LightPosition_cameraspace = ( view * vec4(LightPosition_worldspace,1)).xyz;
+		LightDirection_cameraspace = LightPosition_cameraspace + EyeDirection_cameraspace;
+
+		// Normal of the the vertex, in camera space
+		Normal_cameraspace = ( view * model * vec4(normal,0)).xyz; 
+	
+		// UV of the vertex. No special space for this one.
+	
+		UV = uv;
+		
+		gl_FrontColor  = vec4(1.0, 1.0, 1.0, 1.0);
+	}	
+}
+
+// pixel shader which quite simply just draws the texture to the surface.
